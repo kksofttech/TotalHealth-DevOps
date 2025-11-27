@@ -3,35 +3,34 @@ name: Build and Push Images
 on:
   push:
     branches:
-      - main
+      - master
+  workflow_dispatch:
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-region: ap-south-1
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to ECR
-        id: login-ecr
+      - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build & push patient image
+      - name: Build and push patient-service
         run: |
-          REPO=390844470549.dkr.ecr.ap-south-1.amazonaws.com/patient-service
-          docker build -t $REPO:latest ./patient-service
-          docker push $REPO:latest
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/patient-service:latest ./patient-service
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/patient-service:latest
 
-      - name: Build & push appointment image
+      - name: Build and push appointment-service
         run: |
-          REPO=390844470549.dkr.ecr.ap-south-1.amazonaws.com/appointment-service
-          docker build -t $REPO:latest ./appointment-service
-          docker push $REPO:latest
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/appointment-service:latest ./appointment-service
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/appointment-service:latest
 
