@@ -2,17 +2,14 @@ name: Deploy to EKS
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -22,10 +19,8 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name hackathon-eks-cluster
+        run: aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name hackathon-eks-cluster
 
-      - name: Deploy K8s Manifests
-        run: |
-          kubectl apply -f k8s/
+      - name: Apply manifests
+        run: kubectl apply -f k8s/
 
