@@ -1,0 +1,37 @@
+name: Build and Push Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ap-south-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build & push patient image
+        run: |
+          REPO=390844470549.dkr.ecr.ap-south-1.amazonaws.com/patient-service
+          docker build -t $REPO:latest ./patient-service
+          docker push $REPO:latest
+
+      - name: Build & push appointment image
+        run: |
+          REPO=390844470549.dkr.ecr.ap-south-1.amazonaws.com/appointment-service
+          docker build -t $REPO:latest ./appointment-service
+          docker push $REPO:latest
+

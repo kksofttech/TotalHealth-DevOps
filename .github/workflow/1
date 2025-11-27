@@ -1,0 +1,41 @@
+name: Deploy to EKS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ap-south-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region ap-south-1 --name hackathon-eks-cluster
+
+      - name: Create namespace
+        run: kubectl apply -f k8s/namespace.yaml || true
+
+      - name: Apply manifests
+        run: kubectl apply -f k8s/
+
+      - name: Rollout status (patient)
+        run: kubectl rollout status deployment/patient-deployment -n services --timeout=120s || true
+
+      - name: Rollout status (appointment)
+        run: kubectl rollout status deployment/appointment-deployment -n services --timeout=120s || true
+
